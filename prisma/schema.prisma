@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+// OAuth Accounts
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Sessions de connexion
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Données métier
+model TradingAccount {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  username     String        @unique
+  mainCurrency String
+  transactions Transaction[]
+  portfolios   Portfolio[]
+  alerts       Alert[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Crypto {
+  id           String        @id @default(cuid())
+  name         String
+  symbol       String        @unique
+  transactions Transaction[]
+  dailyStats   DailyStat[]
+  monthlyStats MonthlyStat[]
+  portfolios   Portfolio[]
+  alerts       Alert[]
+
+  @@index([symbol])
+}
+
+model Transaction {
+  id                 String               @id @default(cuid())
+  accountId          String
+  account            TradingAccount       @relation(fields: [accountId], references: [id])
+  cryptoId           String
+  crypto             Crypto               @relation(fields: [cryptoId], references: [id])
+  type               TransactionType
+  montantEUR         Float
+  prixUnitaire       Float
+  quantiteCrypto     Float
+  date               DateTime
+  isConverted        Boolean              @default(false)
+  convertCurrency    String?
+  convertQuantity    Float?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  TransactionHistory TransactionHistory[]
+}
+
+model TransactionHistory {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  changeType    String
+  oldValue      String
+  newValue      String
+  createdAt     DateTime    @default(now())
+
+  @@index([transactionId])
+}
+
+model DailyStat {
+  id          String   @id @default(cuid())
+  cryptoId    String
+  crypto      Crypto   @relation(fields: [cryptoId], references: [id])
+  date        DateTime
+  prixMinimum Float
+  prixMaximum Float
+  prixMoyen   Float
+  volume      Float
+  variation   Float
+
+  @@unique([cryptoId, date])
+  @@index([date])
+}
+
+model MonthlyStat {
+  id          String   @id @default(cuid())
+  cryptoId    String
+  crypto      Crypto   @relation(fields: [cryptoId], references: [id])
+  date        DateTime
+  prixMinimum Float
+  prixMaximum Float
+  prixMoyen   Float
+  volume      Float
+  variation   Float
+
+  @@unique([cryptoId, date])
+  @@index([date])
+}
+
+model Portfolio {
+  id        String         @id @default(cuid())
+  accountId String
+  account   TradingAccount @relation(fields: [accountId], references: [id])
+  cryptoId  String
+  crypto    Crypto         @relation(fields: [cryptoId], references: [id])
+  quantity  Float
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([accountId, cryptoId])
+}
+
+model Alert {
+  id        String         @id @default(cuid())
+  accountId String
+  account   TradingAccount @relation(fields: [accountId], references: [id])
+  cryptoId  String
+  crypto    Crypto         @relation(fields: [cryptoId], references: [id])
+  type      AlertType
+  threshold Float
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([accountId])
+  @@index([cryptoId])
+}
+
+enum TransactionType {
+  ACHAT
+  VENTE
+  CONVERSION
+  TRANSFERT
+}
+
+enum AlertType {
+  PRIX_SUPERIEUR
+  PRIX_INFERIEUR
+  VARIATION_POSITIVE
+  VARIATION_NEGATIVE
+}
