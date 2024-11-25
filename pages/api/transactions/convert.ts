@@ -1,5 +1,5 @@
-import { prisma } from "@/prisma";
-import logError from "@/utils/logging/logs";
+import { prisma } from "@/lib/prisma";
+import logError from "@/lib/utils/logging/logs";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(

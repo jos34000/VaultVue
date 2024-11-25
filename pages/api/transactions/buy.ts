@@ -1,6 +1,6 @@
-import { validateRequest } from "@/api/validation/validateRequest";
-import { prisma } from "@/prisma";
-import { ValidationSchema } from "@/types/types";
+import { validateRequest } from "@/lib/api/validation/validateRequest";
+import { prisma } from "@/lib/prisma";
+import { ValidationSchema } from "@/lib/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const fileName = "buy";

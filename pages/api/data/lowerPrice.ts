@@ -1,7 +1,7 @@
-import getKlines from "@/api/binance/getKlines";
-import { validateRequest } from "@/api/validation/validateRequest";
-import { ValidationSchema } from "@/types/types";
-import logError from "@/utils/logging/logs";
+import getKlines from "@/lib/api/binance/getKlines";
+import { validateRequest } from "@/lib/api/validation/validateRequest";
+import { ValidationSchema } from "@/lib/types/types";
+import logError from "@/lib/utils/logging/logs";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const fileName = "lowerPrice";
